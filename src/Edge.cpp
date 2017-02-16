@@ -3,7 +3,7 @@
  * 2015
  */
 #include "Edge.h"
-#include <eigen3/Eigen/src/Core/Matrix.h>
+#include <Eigen/src/Core/Matrix.h>
 #include "Helper.h"
 
 std::ostream &operator<<(std::ostream &_stream, const Edge &_edge)

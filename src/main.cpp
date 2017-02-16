@@ -12,31 +12,35 @@
 #include "Pivoter.h"
 #include "Front.h"
 #include "Config.h"
-#include "CudaUtil.h"
+//#include "CudaUtil.h"
 
 int main(int _argn, char **_argv)
 {
-	if (system("rm -rf ./output/*") != 0)
-		std::cout << "ERROR: bad command\n";
+	//if (system("rm -rf ./output/*") != 0)
+	//	std::cout << "ERROR: bad command\n";
 
-	if (_argn < 2)
+	if (_argn < 4)
 	{
 		std::cout << "Not enough arguments\n";
 		return EXIT_FAILURE;
 	}
 
 	std::string inputFile = _argv[1];
+	std::string outputFile = _argv[2];
 
-	Config::load("./config/config");
-	double ballRadius = Config::getBallRadius();
-	DebugLevel debug = Config::getDebugLevel();
+	//Config::load("./config.txt");
+	//double ballRadius = Config::getBallRadius();
+	//DebugLevel debug = Config::getDebugLevel();
+	double ballRadius = atof(_argv[3]);
+	DebugLevel debug = NONE;
 	int debugMask = ADD_SEQUENTIAL | DRAW_CLOUD | DRAW_NORMALS | (Config::drawSpheres() ? DRAW_SPHERES : 0x00);
 
 	std::cout << "Loading file " << inputFile << "\n";
 	clock_t begin = clock();
 
 	pcl::PointCloud<pcl::PointNormal>::Ptr cloud(new pcl::PointCloud<pcl::PointNormal>());
-	if (!Helper::getCloudAndNormals(inputFile, cloud))
+	pcl::PointCloud<pcl::RGB>::Ptr rgbs(new pcl::PointCloud<pcl::RGB>);
+	if (!Helper::getCloudAndNormals(inputFile, cloud, -1.0, rgbs))
 	{
 		std::cout << "ERROR: loading failed\n";
 		return EXIT_FAILURE;
@@ -102,7 +106,7 @@ int main(int _argn, char **_argv)
 		EdgePtr edge;
 		while ((edge = front.getActiveEdge()) != NULL)
 		{
-			std::cout << "Testing edge " << *edge << "\n";
+			// std::cout << "Testing edge " << *edge << "\n";
 
 			std::pair<int, TrianglePtr> data = pivoter.pivot(edge);
 			if (data.first != -1 && (!pivoter.isUsed(data.first) || front.inFront(data.first)))
@@ -145,7 +149,8 @@ int main(int _argn, char **_argv)
 	clock_t end = clock();
 
 	std::cout << "Writing output mesh\n";
-	Writer::writeMesh("mesh", cloud, mesh);
+	//Writer::writeMesh("mesh", cloud, mesh);
+	Writer::writeMesh_ply(outputFile, cloud, rgbs, mesh);
 
 	double elapsedTime = (double) (end - begin) / CLOCKS_PER_SEC;
 	std::cout << "Finished in " << std::setprecision(5) << std::fixed << elapsedTime << " [s]\n";

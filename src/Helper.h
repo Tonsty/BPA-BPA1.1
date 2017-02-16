@@ -24,8 +24,9 @@ public:
 	static int getRandomNumber(const int _min, const int _max);
 
 	static void removeNANs(pcl::PointCloud<pcl::PointXYZ>::Ptr &_cloud);
+	static void removeNANs(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr &_cloud);
 	static pcl::PointCloud<pcl::Normal>::Ptr getNormals(const pcl::PointCloud<pcl::PointXYZ>::Ptr &_cloud, const double _searchRadius = -1);
-	static bool getCloudAndNormals(const std::string &_inputFile, pcl::PointCloud<pcl::PointNormal>::Ptr &_cloud, const double _estimationRadius = -1);
+	static bool getCloudAndNormals(const std::string &_inputFile, pcl::PointCloud<pcl::PointNormal>::Ptr &_cloud, const double _estimationRadius = -1, pcl::PointCloud<pcl::RGB>::Ptr &_rgbs = pcl::PointCloud<pcl::RGB>::Ptr());
 
 	static bool isOriented(const Eigen::Vector3f &_normal, const Eigen::Vector3f &_normal0, const Eigen::Vector3f &_normal1, const Eigen::Vector3f &_normal2);
 	static void fixNormals(pcl::PointCloud<pcl::PointNormal>::Ptr &_cloud);

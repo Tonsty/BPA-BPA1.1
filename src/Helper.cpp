@@ -6,7 +6,7 @@
 #include <pcl/filters/filter.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/kdtree/kdtree.h>
-#include <pcl/io/pcd_io.h>
+#include <pcl/io/ply_io.h>
 #include <pcl/features/normal_3d_omp.h>
 #include <ctype.h>
 #include <pcl/filters/passthrough.h>
@@ -33,6 +33,12 @@ void Helper::removeNANs(pcl::PointCloud<pcl::PointXYZ>::Ptr &_cloud)
 	removeNaNFromPointCloud(*_cloud, *_cloud, mapping);
 }
 
+void Helper::removeNANs(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr &_cloud)
+{
+	std::vector<int> mapping;
+	removeNaNFromPointCloud(*_cloud, *_cloud, mapping);
+}
+
 pcl::PointCloud<pcl::Normal>::Ptr Helper::getNormals(const pcl::PointCloud<pcl::PointXYZ>::Ptr &_cloud, const double _searchRadius)
 {
 	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>());
@@ -52,18 +58,28 @@ pcl::PointCloud<pcl::Normal>::Ptr Helper::getNormals(const pcl::PointCloud<pcl::
 	return normals;
 }
 
-bool Helper::getCloudAndNormals(const std::string &_inputFile, pcl::PointCloud<pcl::PointNormal>::Ptr &_cloud, const double _estimationRadius)
+bool Helper::getCloudAndNormals(const std::string &_inputFile, pcl::PointCloud<pcl::PointNormal>::Ptr &_cloud, const double _estimationRadius, pcl::PointCloud<pcl::RGB>::Ptr &_rgbs)
 {
 	bool status = false;
 
-	pcl::PointCloud<pcl::PointXYZ>::Ptr dataXYZ(new pcl::PointCloud<pcl::PointXYZ>());
-	if (pcl::io::loadPCDFile<pcl::PointXYZ>(_inputFile, *dataXYZ) == 0)
+	pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr data(new pcl::PointCloud<pcl::PointXYZRGBNormal>());
+	if (pcl::io::loadPLYFile<pcl::PointXYZRGBNormal>(_inputFile, *data) == 0)
 	{
-		Helper::removeNANs(dataXYZ);
-		pcl::PointCloud<pcl::Normal>::Ptr normals = Helper::getNormals(dataXYZ, _estimationRadius);
+		Helper::removeNANs(data);
+		pcl::PointCloud<pcl::PointXYZ>::Ptr dataXYZ(new pcl::PointCloud<pcl::PointXYZ>());
+		pcl::copyPointCloud(*data, *dataXYZ);
+		if(_rgbs) pcl::copyPointCloud(*data, *_rgbs);
+
+		pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>());
+		if (false) {
+			normals = Helper::getNormals(dataXYZ, _estimationRadius); 
+		}else {
+			pcl::copyPointCloud(*data, *normals);
+		}
 
 		_cloud->clear();
 		concatenateFields(*dataXYZ, *normals, *_cloud);
+		
 
 		// Create the filtering object
 //		pcl::PointCloud<pcl::PointNormal>::Ptr filtered(new pcl::PointCloud<pcl::PointNormal>());

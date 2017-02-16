@@ -39,6 +39,7 @@ public:
 	static void writeMesh(const std::string &_filename, const pcl::PointCloud<pcl::PointNormal>::Ptr &_cloud, const std::vector<TrianglePtr> &_meshData, const TrianglePtr &_seed, const int _mask = 0x00);
 	static void writeMesh(const std::string &_filename, const pcl::PointCloud<pcl::PointNormal>::Ptr &_cloud, const std::vector<TrianglePtr> &_meshData, const EdgePtr &_boundary, const int _mask = 0x00);
 	static void writeTriangle(const std::string &_filename, const Triangle &_triangle);
+	static void writeMesh_ply(const std::string &_filename, pcl::PointCloud<pcl::PointNormal>::Ptr _cloud, const pcl::PointCloud<pcl::RGB>::Ptr _rgbs, const std::vector<TrianglePtr> &_meshData);
 
 private:
 	Writer();

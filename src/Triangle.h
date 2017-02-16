@@ -6,7 +6,7 @@
 
 #include <pcl/common/common.h>
 #include <vector>
-#include <eigen3/Eigen/src/Core/Matrix.h>
+#include <Eigen/src/Core/Matrix.h>
 #include "Edge.h"
 
 // Triangle smart pointer

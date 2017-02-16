@@ -6,7 +6,7 @@
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/kdtree/kdtree.h>
-#include <eigen3/Eigen/src/Core/Matrix.h>
+#include <Eigen/src/Core/Matrix.h>
 #include <vector>
 #include "Edge.h"
 #include "Helper.h"

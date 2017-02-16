@@ -3,6 +3,7 @@
  * 2015
  */
 #include "Writer.h"
+#include <pcl/io/ply_io.h>
 
 #define PRECISION		12
 
@@ -52,11 +53,11 @@ void Writer::writeMesh(const std::string &_filename, const pcl::PointCloud<pcl::
 	output.open(name.c_str(), std::fstream::out);
 
 	// Write header
-	output << "appearance { -face +edge }\n{ LIST\n\n";
+	//output << "appearance { -face +edge }\n{ LIST\n\n";
 
-	output << "{ ";
+	//output << "{ ";
 	generateMesh(_meshData, output);
-	output << "}\n\n";
+	//output << "}\n\n";
 
 	if (drawCloud)
 	{
@@ -72,7 +73,7 @@ void Writer::writeMesh(const std::string &_filename, const pcl::PointCloud<pcl::
 		output << "}\n\n";
 	}
 
-	output << "}\n";
+	//output << "}\n";
 	output.close();
 }
 
@@ -234,7 +235,7 @@ void Writer::generateMesh(const std::vector<TrianglePtr> &_meshData, std::ofstre
 		}
 	}
 
-	_output << "appearance { +face +edge }\n";
+	//_output << "appearance { +face +edge }\n";
 
 	_output << "OFF\n# num of points, num of faces, num of edges\n";
 	int points = pointMap.size();
@@ -248,6 +249,65 @@ void Writer::generateMesh(const std::vector<TrianglePtr> &_meshData, std::ofstre
 	_output << "# polygon faces\n";
 	for (size_t k = 0; k < sides.size(); k++)
 		_output << "3 " << sides[k][0] << " " << sides[k][1] << " " << sides[k][2] << "\n";
+}
+
+void Writer::writeMesh_ply(const std::string &_filename, pcl::PointCloud<pcl::PointNormal>::Ptr _cloud, const pcl::PointCloud<pcl::RGB>::Ptr _rgbs, const std::vector<TrianglePtr> &_meshData)
+{
+	pcl::PolygonMeshPtr mesh(new pcl::PolygonMesh);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr data(new pcl::PointCloud<pcl::PointXYZRGB>());
+	pcl::copyPointCloud(*_cloud, *data);
+	pcl::copyPointCloud(*_rgbs, *data);
+	pcl::toPCLPointCloud2(*data, mesh->cloud);
+	for (size_t k = 0; k < _meshData.size(); k++) {
+		pcl::Vertices vertices;
+		for(size_t i = 0; i < 3; i ++) vertices.vertices.push_back(_meshData[k]->getVertexIndex(i));
+		mesh->polygons.push_back(vertices);
+	}
+	pcl::io::savePLYFile(_filename, *mesh);
+
+	//std::ofstream output;
+	//output.open(_filename.c_str(), std::fstream::out);
+
+	//output.precision(PRECISION);
+	//output << std::fixed;
+
+	//std::vector<std::vector<int> > sides;
+	//std::vector<pcl::PointNormal *> pointArray;
+	//std::map<pcl::PointNormal *, int> pointMap;
+	//int counter = 0;
+	//for (size_t k = 0; k < _meshData.size(); k++)
+	//{
+	//	TrianglePtr t = _meshData[k];
+	//	sides.push_back(std::vector<int>());
+
+	//	for (int i = 0; i < 3; i++)
+	//	{
+	//		pcl::PointNormal *p = t->getVertex(i).first;
+	//		if (pointMap.find(p) == pointMap.end())
+	//		{
+	//			pointMap[p] = pointArray.size();
+	//			pointArray.push_back(p);
+	//		}
+
+	//		sides.back().push_back(pointMap[p]);
+	//	}
+	//}
+
+	//output << "ply\nformat ascii 1.0\n";
+	//int points = pointMap.size();
+	//int faces = _meshData.size();
+	//output << "element vertex " << points << "\n";
+	//output << "property float x\n" \
+	//	"property float y\n" \
+	//	"property float z\n";
+	//output << "element face " << faces << "\n";
+	//output << "property list uchar int vertex_indices\n" \
+	//	"end_header\n";
+	//for (size_t i = 0; i < pointArray.size(); i++)
+	//	output << pointArray[i]->x << " " << pointArray[i]->y << " " << pointArray[i]->z << "\n";
+
+	//for (size_t k = 0; k < sides.size(); k++)
+	//	output << "3 " << sides[k][0] << " " << sides[k][1] << " " << sides[k][2] << "\n";
 }
 
 void Writer::generateSphere(const Eigen::Vector3f &_center, const double _radius, std::ofstream &_output)

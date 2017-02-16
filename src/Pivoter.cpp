@@ -139,7 +139,7 @@ TrianglePtr Pivoter::findSeed()
 
 	TrianglePtr seed;
 	bool found = false;
-	std::map<unsigned long, bool> tested;
+	std::map<unsigned __int64, bool> tested;
 	std::cout << "Remaining points " << notUsed.size() << std::endl;
 
 	for (std::map<int, bool>::iterator it = notUsed.begin(); it != notUsed.end() && !found; it++)
@@ -152,32 +152,44 @@ TrianglePtr Pivoter::findSeed()
 			continue;
 
 		// Look for a valid seed
-#pragma omp parallel for
-		for (size_t j = 0; j < indices.size(); j++)
+//#pragma omp parallel for
+		for (int j = 0; j < indices.size(); j++)
 		{
 			if (!found)
 			{
 				int index1 = indices[j];
-				if (index1 == index0 || notUsed.find(index1) == notUsed.end())
+				std::map<int, bool>::iterator tmp_it1 = notUsed.find(index1);
+				if (index1 == index0 || tmp_it1 == notUsed.end())
 					continue;
 
 				for (size_t k = 0; k < indices.size() && !found; k++)
 				{
 					int index2 = indices[k];
+					std::map<int, bool>::iterator tmp_it2 = notUsed.find(index2);
+					if(index1 == index2 || index2 == index0 || tmp_it2 == notUsed.end())
+						continue;
 
 					std::vector<int> trio;
 					trio.push_back(index0);
 					trio.push_back(index1);
 					trio.push_back(index2);
 					std::sort(trio.begin(), trio.end());
-					unsigned long code = trio[0] + 1e5 * trio[1] + 1e10 * trio[2];
+					unsigned __int64 code = trio[0] + 1e6 * trio[1] + 1e12 * trio[2];
 
-					if (tested.find(code) != tested.end() || index1 == index2 || index2 == index0 || notUsed.find(index2) == notUsed.end())
-						continue;
-#pragma omp critical
+//					if (tested.find(code) != tested.end() || index1 == index2 || index2 == index0 || notUsed.find(index2) == notUsed.end())
+//						continue;
+//#pragma omp critical
+//					{
+//						tested[code] = true;
+//					}
+
+					bool to_continue = false;
+//#pragma omp critical
 					{
-						tested[code] = true;
+						if (tested.find(code) != tested.end()) to_continue = true;
+						else tested[code] = true;
 					}
+					if(to_continue) continue;
 
 					if (debug >= MEDIUM)
 						std::cout << "\tTesting (" << index0 << ", " << index1 << ", " << index2 << ")\n";
@@ -190,16 +202,28 @@ TrianglePtr Pivoter::findSeed()
 						std::vector<int> neighborhood = getNeighbors(ballCenter, ballRadius);
 						if (!found && isEmpty(neighborhood, index0, index1, index2, center))
 						{
-#pragma omp critical
+//#pragma omp critical
 							{
 								if (!found)
 								{
 									std::cout << "\tSeed found (" << sequence[0] << ", " << sequence[1] << ", " << sequence[2] << ")\n";
 
 									seed = TrianglePtr(new Triangle(cloud->at((int) sequence[0]), cloud->at((int) sequence[1]), cloud->at((int) sequence[2]), sequence[0], sequence[1], sequence[2], ballCenter, ballRadius));
-									notUsed.erase(index0);
-									notUsed.erase(index1);
-									notUsed.erase(index2);
+									
+									std::map<int, bool>::iterator tmp_it0 = notUsed.find(index0);
+
+									if (it == tmp_it0) it = notUsed.erase(it);
+									else notUsed.erase(tmp_it0);
+
+									if (it == tmp_it1) it = notUsed.erase(it);
+									else notUsed.erase(tmp_it1);
+
+									if (it == tmp_it2) it = notUsed.erase(it);
+									else notUsed.erase(tmp_it2);
+									
+									//notUsed.erase(index0);
+									//notUsed.erase(index1);
+									//notUsed.erase(index2);
 
 									found = true;
 								}
@@ -210,6 +234,7 @@ TrianglePtr Pivoter::findSeed()
 				}
 			}
 		}
+		if(it == notUsed.end()) break;
 	}
 
 	return seed;
